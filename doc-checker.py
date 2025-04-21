@@ -5,7 +5,8 @@ import sys
 import subprocess
 from pathlib import Path
 from typing import List, Dict, Optional
-import openai
+# OpenAI support (optional)
+# import openai
 import ollama
 from github import Github
 from git import Repo
@@ -13,8 +14,8 @@ import json
 
 # Configuration
 DOC_PATHS = ["docs/", "README.md"]  # Add more documentation paths as needed
-LLM_BACKEND = os.getenv('LLM_BACKEND', 'openai')  # 'openai' or 'ollama'
-MODEL = os.getenv('LLM_MODEL', 'gpt-4')  # For OpenAI: 'gpt-4', for Ollama: e.g., 'llama2', 'mistral', etc.
+LLM_BACKEND = 'ollama'  # Only Ollama is supported by default
+MODEL = os.getenv('LLM_MODEL', 'llama2')  # For Ollama: 'llama2', 'mistral', etc.
 OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
 
 def get_pull_request_info() -> Dict:
@@ -51,34 +52,37 @@ def read_documentation() -> Dict[str, str]:
                 docs[str(doc_file)] = doc_file.read_text()
     return docs
 
+# OpenAI support (optional)
+"""
 def analyze_with_openai(diff: str, doc_content: str) -> str:
-    """Use OpenAI to analyze documentation."""
+    # Use OpenAI to analyze documentation.
     client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
     
     prompt = f"""
-    Analyze if the following documentation needs to be updated based on these code changes.
-    If the documentation is already accurate or the changes don't affect it, return the original documentation.
-    If updates are needed, provide the updated documentation.
+    # Analyze if the following documentation needs to be updated based on these code changes.
+    # If the documentation is already accurate or the changes don't affect it, return the original documentation.
+    # If updates are needed, provide the updated documentation.
     
-    Code changes:
-    {diff}
+    # Code changes:
+    # {diff}
     
-    Documentation to check:
-    {doc_content}
+    # Documentation to check:
+    # {doc_content}
     
-    Return only the updated documentation if changes are needed, or the original if no changes are required.
-    """
+    # Return only the updated documentation if changes are needed, or the original if no changes are required.
+    # """
     
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": "You are a documentation expert. Analyze if documentation needs updates based on code changes."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3
-    )
+    # response = client.chat.completions.create(
+    #     model=MODEL,
+    #     messages=[
+    #         {"role": "system", "content": "You are a documentation expert. Analyze if documentation needs updates based on code changes."},
+    #         {"role": "user", "content": prompt}
+    #     ],
+    #     temperature=0.3
+    # )
     
-    return response.choices[0].message.content
+    # return response.choices[0].message.content
+"""
 
 def analyze_with_ollama(diff: str, doc_content: str) -> str:
     """Use Ollama to analyze documentation."""
@@ -112,12 +116,7 @@ def analyze_documentation(diff: str, docs: Dict[str, str]) -> Dict[str, str]:
     updated_docs = {}
     
     for doc_path, doc_content in docs.items():
-        if LLM_BACKEND == 'openai':
-            updated_content = analyze_with_openai(diff, doc_content)
-        elif LLM_BACKEND == 'ollama':
-            updated_content = analyze_with_ollama(diff, doc_content)
-        else:
-            raise ValueError(f"Unsupported LLM backend: {LLM_BACKEND}")
+        updated_content = analyze_with_ollama(diff, doc_content)
         
         if updated_content != doc_content:
             updated_docs[doc_path] = updated_content
