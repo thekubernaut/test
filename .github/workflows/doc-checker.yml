@@ -1,0 +1,33 @@
+name: Documentation Checker
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required to get the full git history for diffing
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run Documentation Checker
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        LLM_BACKEND: ${{ secrets.LLM_BACKEND || 'openai' }}
+        LLM_MODEL: ${{ secrets.LLM_MODEL || 'gpt-4' }}
+        OLLAMA_HOST: ${{ secrets.OLLAMA_HOST || 'http://localhost:11434' }}
+      run: python doc-checker.py 
